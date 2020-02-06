@@ -1,15 +1,16 @@
-create table dh_patient_list as ( 
+ 
  
 -- PATIENTS
  
-SELECT distinct cohort_id--, -- primary key for each cohort element
-   --p.person_id, p.gender_concept_id, (extract(year from v.visit_start_date) - p.year_of_birth + 1) AS age_at_hospitalization,-- personal infos
-   --m.measurement_concept_id, m.measurement_date, -- measurement infos
-   --c.condition_concept_id, c.condition_start_date, c.ext_cond_source_value_kcd, -- condition infos
-   --v.visit_start_date, v.visit_end_date, --visit infos   
-   --d.drug_concept_id, d.drug_exposure_start_date, d.drug_exposure_end_date, -- drug infos
-   --(v.visit_end_date - v.visit_start_date + 1) AS hospitalization_period --, (m.measurement_date - v.visit_start_date) as observation_period -- periods infos (unit: days)
-FROM (SELECT cohort_id, person_id, visit_start_date, visit_end_date FROM public.dh_raw_cohort_all ) AS v -- raw_cohorts visit_occurrence table
+SELECT distinct(cohort_id), -- primary key for each cohort element
+   v.person_id, v.gender_concept_id, age_at_hospitalization,-- personal infos
+   m.measurement_concept_id, m.value_source_value, m.measurement_date, -- measurement infos
+   c.condition_concept_id, c.condition_start_date, c.ext_cond_source_value_kcd, -- condition infos
+   v.visit_start_date, v.visit_end_date, --visit infos   
+   d.drug_concept_id, d.drug_exposure_start_date, d.drug_exposure_end_date, -- drug infos
+   (v.visit_end_date - v.visit_start_date + 1) AS hospitalization_period, 
+   case when m.measurement_date is not NULL then (m.measurement_date - v.visit_start_date) else (c.condition_start_date - v.visit_start_date) end as observation_period -- periods infos (unit: days)
+FROM (SELECT cohort_id, person_id, gender_concept_id, age_at_hospitalization, visit_start_date, visit_end_date FROM public.dh_raw_cohort_all ) AS v -- raw_cohorts visit_occurrence table
  
 LEFT JOIN 
 (
@@ -23,7 +24,7 @@ ON p.person_id = v.person_id
  
 LEFT JOIN 
 (
-	SELECT person_id, condition_start_date, ext_cond_source_value_kcd
+	SELECT person_id, condition_concept_id, condition_start_date, ext_cond_source_value_kcd
 	FROM cdm.condition_occurrence
 	WHERE ext_cond_source_value_kcd = 'A047') AS c -- join condition_occurrence table
 ON c.person_id = v.person_id
@@ -49,4 +50,5 @@ WHERE ((d.drug_exposure_start_date >= v.visit_start_date) and (d.drug_exposure_s
 			   and (d.drug_exposure_start_date < c.condition_start_date and c.condition_start_date <= v.visit_end_date)
            )
    )
-)
+ 
+
