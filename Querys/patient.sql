@@ -41,12 +41,12 @@ WHERE ((d.drug_exposure_start_date >= v.visit_start_date) and (d.drug_exposure_s
    and (
            (
 			   	m.measurement_concept_id = 3044936 and m.value_source_value like '%ositive%'   -- join measurement table
-	   			and (d.drug_exposure_start_date < m.measurement_date and m.measurement_date <= d.drug_exposure_end_date)
+	   			and (d.drug_exposure_start_date < m.measurement_date and m.measurement_date <= v.visit_end_date)
            )
        or
            (
 			   c.ext_cond_source_value_kcd = 'A047'
-			   and (d.drug_exposure_start_date < c.condition_start_date and c.condition_start_date <= d.drug_exposure_end_date)
+			   and (d.drug_exposure_start_date < c.condition_start_date and c.condition_start_date <= v.visit_end_date)
            )
    )
 )
